@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Your AI Friend 💬</title>
+
+  <!-- PDF export library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
     :root {
       --bg: radial-gradient(circle at top, #020617 0, #020617 40%, #000 100%);
@@ -12,7 +16,6 @@
       --text-main: #e5e7eb;
       --muted: #9ca3af;
       --accent: #2563eb;
-      --accent-soft: rgba(37, 99, 235, 0.15);
       --bot-bubble: #020617;
       --user-bubble: #2563eb;
       --input-bg: #020617;
@@ -113,6 +116,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-wrap: wrap;
     }
 
     .title-main {
@@ -130,6 +134,7 @@
       display: inline-flex;
       align-items: center;
       gap: 6px;
+      white-space: nowrap;
     }
 
     .chip-dot {
@@ -149,6 +154,8 @@
       display: flex;
       align-items: center;
       gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
     }
 
     .pill {
@@ -158,13 +165,14 @@
       background: rgba(15, 23, 42, 0.7);
       border: 1px solid rgba(148, 163, 184, 0.45);
       color: var(--muted);
+      white-space: nowrap;
     }
 
     .icon-button {
       border: none;
       background: rgba(15, 23, 42, 0.7);
       cursor: pointer;
-      font-size: 1rem;
+      font-size: 0.9rem;
       padding: 7px;
       border-radius: 999px;
       color: var(--muted);
@@ -172,6 +180,11 @@
       align-items: center;
       justify-content: center;
       transition: background 0.15s ease, transform 0.1s ease, color 0.15s ease;
+    }
+
+    .icon-button span {
+      font-size: 0.8rem;
+      margin-left: 4px;
     }
 
     .icon-button:hover {
@@ -199,14 +212,27 @@
     .chat-box::-webkit-scrollbar {
       width: 6px;
     }
-
     .chat-box::-webkit-scrollbar-track {
       background: transparent;
     }
-
     .chat-box::-webkit-scrollbar-thumb {
       background: rgba(75, 85, 99, 0.8);
       border-radius: 999px;
+    }
+
+    .bubble {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      max-width: 100%;
+    }
+
+    .bubble.user {
+      justify-content: flex-end;
+    }
+
+    .bubble.bot {
+      justify-content: flex-start;
     }
 
     .message {
@@ -223,7 +249,6 @@
     .message.user {
       background: linear-gradient(135deg, #2563eb, #1d4ed8);
       color: #f9fafb;
-      align-self: flex-end;
       border-bottom-right-radius: 5px;
       box-shadow: 0 10px 25px rgba(37, 99, 235, 0.5);
       transform-origin: 100% 100%;
@@ -233,13 +258,52 @@
     .message.bot {
       background: rgba(15, 23, 42, 0.95);
       color: #e5e7eb;
-      align-self: flex-start;
       border-bottom-left-radius: 5px;
       border: 1px solid rgba(55, 65, 81, 0.9);
       box-shadow: 0 16px 30px rgba(15, 23, 42, 0.8);
       white-space: pre-wrap;
       transform-origin: 0 100%;
       animation: slideInLeft 0.18s ease-out;
+    }
+
+    .msg-text {
+      white-space: pre-wrap;
+    }
+
+    .msg-meta {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-top: 3px;
+      text-align: right;
+      opacity: 0.8;
+    }
+
+    .msg-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .bubble.user:hover .msg-actions,
+    .bubble.bot:hover .msg-actions {
+      opacity: 1;
+    }
+
+    .msg-btn {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.7rem;
+      color: #9ca3af;
+      padding: 3px;
+      border-radius: 6px;
+    }
+
+    .msg-btn:hover {
+      background: rgba(15, 23, 42, 0.8);
+      color: #e5e7eb;
     }
 
     .typing {
@@ -260,12 +324,8 @@
       animation: blink 1.2s infinite;
     }
 
-    .dots span:nth-child(2) {
-      animation-delay: 0.15s;
-    }
-    .dots span:nth-child(3) {
-      animation-delay: 0.3s;
-    }
+    .dots span:nth-child(2) { animation-delay: 0.15s; }
+    .dots span:nth-child(3) { animation-delay: 0.3s; }
 
     /* Input row */
 
@@ -315,9 +375,7 @@
       transition: transform 0.08s ease, opacity 0.15s ease;
     }
 
-    .mic-btn:active {
-      transform: scale(0.94);
-    }
+    .mic-btn:active { transform: scale(0.94); }
 
     .send-btn {
       padding: 9px 18px;
@@ -337,9 +395,7 @@
       white-space: nowrap;
     }
 
-    .send-btn span.icon {
-      font-size: 0.9rem;
-    }
+    .send-btn span.icon { font-size: 0.9rem; }
 
     .send-btn:hover {
       background: linear-gradient(135deg, #1d4ed8, #1d4ed8);
@@ -362,65 +418,33 @@
       padding: 0 2px 2px;
     }
 
-    .footer-hint span {
-      opacity: 0.9;
-    }
-
     /* Animations */
 
     @keyframes blink {
-      0% {
-        transform: translateY(0);
-        opacity: 0.4;
-      }
-      50% {
-        transform: translateY(-2px);
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(0);
-        opacity: 0.4;
-      }
+      0% { transform: translateY(0); opacity: 0.4; }
+      50% { transform: translateY(-2px); opacity: 1; }
+      100% { transform: translateY(0); opacity: 0.4; }
     }
 
     @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-      to {
-        opacity: 1;
-      }
+      from { opacity: 0; } to { opacity: 1; }
     }
 
     @keyframes slideInRight {
-      from {
-        opacity: 0;
-        transform: translateX(6px) scale(0.98);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-      }
+      from { opacity: 0; transform: translateX(6px) scale(0.98); }
+      to   { opacity: 1; transform: translateX(0) scale(1); }
     }
 
     @keyframes slideInLeft {
-      from {
-        opacity: 0;
-        transform: translateX(-6px) scale(0.98);
-      }
-      to {
-        opacity: 1;
-        transform: translateX(0) scale(1);
-      }
+      from { opacity: 0; transform: translateX(-6px) scale(0.98); }
+      to   { opacity: 1; transform: translateX(0) scale(1); }
     }
 
     @media (max-width: 520px) {
-      .chat-container {
-        border-radius: 18px;
-      }
-      .chat-box {
-        height: min(65vh, 420px);
-      }
+      .chat-container { border-radius: 18px; padding: 14px 12px 10px; }
+      .chat-box { height: min(65vh, 420px); }
+      .title-main { font-size: 1rem; }
+      .subtitle { font-size: 0.7rem; }
     }
   </style>
 </head>
@@ -446,7 +470,10 @@
             </div>
           </div>
           <div class="header-actions">
-            <div class="pill">Saved chat · local only</div>
+            <button class="icon-button" id="export-btn" title="Export chat as PDF">
+              📄<span>PDF</span>
+            </button>
+            <div class="pill" id="edit-pill" style="display:none;">Editing last message…</div>
             <button
               class="icon-button"
               id="theme-toggle"
@@ -477,15 +504,15 @@
           </button>
         </div>
         <div class="footer-hint">
-          <span>
-            Tip: Type “my name is Yash” once — bot tumhe naam se bulaayega 😊
-          </span>
+          Tip: Type “my name is Yash” once — bot tumhe naam se bulaayega 😊
         </div>
       </div>
     </div>
   </div>
 
   <script>
+    const BACKEND_URL = "https://ai-friend-15a2.onrender.com/chat";
+
     const chatBox = document.getElementById("chat-box");
     const userInput = document.getElementById("user-input");
     const sendBtn = document.getElementById("send-btn");
@@ -493,41 +520,115 @@
     const themeToggle = document.getElementById("theme-toggle");
     const titleText = document.getElementById("title-text");
     const statusChip = document.getElementById("status-chip");
+    const editPill = document.getElementById("edit-pill");
+    const exportBtn = document.getElementById("export-btn");
 
     const history = [];
+    const messageElements = [];
     let userName = localStorage.getItem("aiFriendName") || "";
+    let typingDiv = null;
+    let recognition = null;
+    let recognizing = false;
+    let editingIndex = null; // history index being edited
+
     if (userName) {
       titleText.textContent = `Your AI Friend · ${userName}`;
     }
 
-    let typingDiv = null;
-    let recognition = null;
-    let recognizing = false;
+    /* Helpers */
 
     function scrollToBottom() {
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    function addMessage(text, sender) {
-      const div = document.createElement("div");
-      div.classList.add("message", sender);
-      div.innerText = text;
-      chatBox.appendChild(div);
+    function setStatus(text, isOnline = true) {
+      statusChip.innerHTML = `
+        <span class="chip-dot" style="${
+          isOnline
+            ? ""
+            : "background:#fbbf24;box-shadow:0 0 0 4px rgba(251,191,36,0.25);"
+        }"></span>
+        <span>${text}</span>
+      `;
+    }
+
+    function createBubble(role, text, index) {
+      const bubble = document.createElement("div");
+      bubble.classList.add("bubble", role);
+      bubble.dataset.index = index;
+      bubble.dataset.role = role;
+
+      const msg = document.createElement("div");
+      msg.classList.add("message", role);
+
+      const msgText = document.createElement("div");
+      msgText.classList.add("msg-text");
+      msgText.textContent = text;
+
+      msg.appendChild(msgText);
+
+      // meta (time)
+      const meta = document.createElement("div");
+      meta.classList.add("msg-meta");
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      meta.textContent = `${role === "user" ? "You" : "AI"} · ${hh}:${mm}`;
+      msg.appendChild(meta);
+
+      bubble.appendChild(msg);
+
+      // actions (edit/delete for user, delete for bot)
+      const actions = document.createElement("div");
+      actions.classList.add("msg-actions");
+
+      const delBtn = document.createElement("button");
+      delBtn.classList.add("msg-btn");
+      delBtn.textContent = "Delete";
+      delBtn.onclick = () => deleteMessage(Number(bubble.dataset.index));
+      actions.appendChild(delBtn);
+
+      if (role === "user") {
+        const editBtn = document.createElement("button");
+        editBtn.classList.add("msg-btn");
+        editBtn.textContent = "Edit & resend";
+        editBtn.onclick = () => startEdit(Number(bubble.dataset.index));
+        actions.appendChild(editBtn);
+      }
+
+      bubble.appendChild(actions);
+      chatBox.appendChild(bubble);
+
+      messageElements.push(bubble);
       scrollToBottom();
-      return div;
+      return { bubble, msgText };
+    }
+
+    function addMessage(text, role, animateBot = false) {
+      const index = history.length; // same order
+      const { bubble, msgText } = createBubble(role, role === "model" ? text : text, index);
+
+      if (role === "model" && animateBot) {
+        msgText.textContent = "";
+        typeText(msgText, text);
+      }
+
+      return bubble;
     }
 
     function showTyping() {
       if (typingDiv) return;
       typingDiv = document.createElement("div");
-      typingDiv.classList.add("message", "bot");
+      typingDiv.classList.add("bubble", "bot");
       typingDiv.innerHTML = `
-        <span class="typing">
-          AI is typing
-          <span class="dots">
-            <span></span><span></span><span></span>
+        <div class="message bot">
+          <span class="typing">
+            AI is typing
+            <span class="dots">
+              <span></span><span></span><span></span>
+            </span>
           </span>
-        </span>
+        </div>
       `;
       chatBox.appendChild(typingDiv);
       scrollToBottom();
@@ -540,15 +641,6 @@
       }
     }
 
-    function setStatus(text, isOnline = true) {
-      statusChip.innerHTML = `
-        <span class="chip-dot" style="${
-          isOnline ? "" : "background:#fbbf24;box-shadow:0 0 0 4px rgba(251,191,36,0.25);"
-        }"></span>
-        <span>${text}</span>
-      `;
-    }
-
     function detectName(message) {
       const match = message.match(/my name is\s+([a-zA-Z]+)/i);
       if (match && match[1]) {
@@ -558,17 +650,125 @@
       }
     }
 
+    /* Typing animation for bot text */
+    function typeText(element, fullText) {
+      let i = 0;
+      const speed = 15; // ms per char
+      const maxInstant = 40; // for very short
+      if (fullText.length <= maxInstant) {
+        element.textContent = fullText;
+        return;
+      }
+      const timer = setInterval(() => {
+        element.textContent = fullText.slice(0, i);
+        i++;
+        scrollToBottom();
+        if (i > fullText.length) clearInterval(timer);
+      }, speed);
+    }
+
+    /* History persistence */
+
+    function saveHistory() {
+      try {
+        localStorage.setItem("aiFriendHistory", JSON.stringify(history));
+      } catch (e) {
+        console.warn("Could not save history", e);
+      }
+    }
+
+    function loadHistory() {
+      try {
+        const raw = localStorage.getItem("aiFriendHistory");
+        if (!raw) return false;
+        const arr = JSON.parse(raw);
+        if (!Array.isArray(arr) || !arr.length) return false;
+
+        // rebuild
+        arr.forEach((item) => {
+          history.push(item);
+          addMessage(item.text, item.role, false);
+        });
+        return true;
+      } catch (e) {
+        console.warn("Could not load history", e);
+        return false;
+      }
+    }
+
+    /* Delete & edit */
+
+    function reindexMessages() {
+      messageElements.forEach((el, idx) => {
+        el.dataset.index = idx;
+      });
+    }
+
+    function deleteMessage(idx) {
+      if (idx < 0 || idx >= history.length) return;
+      // remove from DOM
+      const el = messageElements[idx];
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+      // remove from arrays
+      history.splice(idx, 1);
+      messageElements.splice(idx, 1);
+      reindexMessages();
+      saveHistory();
+    }
+
+    function startEdit(idx) {
+      if (idx < 0 || idx >= history.length) return;
+      if (history[idx].role !== "user") return;
+
+      editingIndex = idx;
+      userInput.value = history[idx].text;
+      userInput.focus();
+      editPill.style.display = "inline-flex";
+    }
+
+    function applyEdit(newText) {
+      const idx = editingIndex;
+      editingIndex = null;
+      editPill.style.display = "none";
+
+      if (idx == null || idx < 0 || idx >= history.length) return;
+
+      // update user message text
+      history[idx].text = newText;
+      const bubble = messageElements[idx];
+      const msgText = bubble.querySelector(".msg-text");
+      if (msgText) msgText.textContent = newText;
+
+      // remove all messages AFTER this (old answers invalid)
+      for (let i = messageElements.length - 1; i > idx; i--) {
+        const el = messageElements[i];
+        if (el && el.parentNode) el.parentNode.removeChild(el);
+        messageElements.pop();
+        history.pop();
+      }
+      reindexMessages();
+      saveHistory();
+    }
+
+    /* Main send logic */
+
     async function sendMessage() {
       const text = userInput.value.trim();
       if (!text) return;
 
-      addMessage(text, "user");
-      history.push({ role: "user", text });
+      if (editingIndex !== null) {
+        // update existing user message and history
+        applyEdit(text);
+      } else {
+        // new user message
+        history.push({ role: "user", text });
+        addMessage(text, "user", false);
+      }
 
       detectName(text);
-
       userInput.value = "";
       userInput.focus();
+      saveHistory();
 
       sendBtn.disabled = true;
       micBtn.disabled = true;
@@ -576,42 +776,41 @@
       showTyping();
 
       try {
-        const res = await fetch(
-          "https://ai-friend-15a2.onrender.com/chat",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              user_message: text,
-              history: history,
-              user_name: userName,
-            }),
-          }
-        );
+        const res = await fetch(BACKEND_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_message: text,
+            history: history,
+            user_name: userName,
+          }),
+        });
 
         const data = await res.json();
-        const botText =
-          data.response_text || "Sorry, kuch gadbad ho gayi 🥲";
+        const botText = data.response_text || "Sorry, kuch gadbad ho gayi 🥲";
 
         hideTyping();
-        addMessage(botText, "bot");
         history.push({ role: "model", text: botText });
+        addMessage(botText, "model", true);
+        saveHistory();
         setStatus("Online · Gemini", true);
       } catch (err) {
         console.error(err);
         hideTyping();
         const errorText =
           "⚠️ Backend se connect nahi ho pa raha. Thodi der baad try karna, ya Yash ko bolo server check kare 🙂";
-        addMessage(errorText, "bot");
         history.push({ role: "model", text: errorText });
+        addMessage(errorText, "model", false);
+        saveHistory();
         setStatus("Offline? Check server", false);
       } finally {
         sendBtn.disabled = false;
-        micBtn.disabled = !("webkitSpeechRecognition" in window || "SpeechRecognition" in window);
+        micBtn.disabled =
+          !("webkitSpeechRecognition" in window || "SpeechRecognition" in window);
       }
     }
+
+    /* Events */
 
     userInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
@@ -622,7 +821,7 @@
 
     sendBtn.addEventListener("click", sendMessage);
 
-    // Theme toggle
+    // Theme toggle (simple)
     themeToggle.addEventListener("click", () => {
       document.body.classList.toggle("light-mode");
       const isLight = document.body.classList.contains("light-mode");
@@ -637,7 +836,6 @@
       localStorage.setItem("aiFriendTheme", isLight ? "light" : "dark");
     });
 
-    // Load theme preference
     const savedTheme = localStorage.getItem("aiFriendTheme");
     if (savedTheme === "light") {
       document.body.classList.add("light-mode");
@@ -680,21 +878,58 @@
 
     micBtn.addEventListener("click", () => {
       if (!recognition) return;
-      if (!recognizing) {
-        recognition.start();
-      } else {
-        recognition.stop();
+      if (!recognizing) recognition.start();
+      else recognition.stop();
+    });
+
+    // PDF export
+    exportBtn.addEventListener("click", () => {
+      try {
+        if (!window.jspdf) {
+          alert("PDF library load nahi hui. Internet connection check karo.");
+          return;
+        }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ unit: "pt", format: "a4" });
+        let y = 40;
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(14);
+        doc.text("Your AI Friend - Chat History", 40, y);
+        y += 24;
+        doc.setFontSize(11);
+
+        history.forEach((item) => {
+          const prefix = item.role === "user" ? "You: " : "AI: ";
+          const lines = doc.splitTextToSize(prefix + item.text, 500);
+          if (y + lines.length * 14 > 800) {
+            doc.addPage();
+            y = 40;
+          }
+          doc.text(lines, 40, y);
+          y += lines.length * 14 + 10;
+        });
+        const filename = userName
+          ? `ai-friend-chat-${userName}.pdf`
+          : "ai-friend-chat.pdf";
+        doc.save(filename);
+      } catch (e) {
+        console.error(e);
+        alert("PDF export me problem aa gayi. Console check karo.");
       }
     });
 
-    // Initial welcome message
+    // Initial load: restore history or show welcome
     window.addEventListener("load", () => {
       userInput.focus();
-      const welcome = userName
-        ? `Hi ${userName}! 😊 Main tumhara AI Friend hoon. Kya help karu aaj?`
-        : "Hi! 😊 Main tumhara AI Friend hoon. Tum mujhe kuch bhi puch sakte ho – coding, exams, ya random bakchodi 😄";
-      addMessage(welcome, "bot");
-      history.push({ role: "model", text: welcome });
+      const loaded = loadHistory();
+      if (!loaded) {
+        const welcome = userName
+          ? `Hi ${userName}! 😊 Main tumhara AI Friend hoon. Kya help karu aaj?`
+          : "Hi! 😊 Main tumhara AI Friend hoon. Tum mujhe kuch bhi puch sakte ho – coding, exams, ya random bakchodi 😄";
+        history.push({ role: "model", text: welcome });
+        addMessage(welcome, "model", false);
+        saveHistory();
+      }
       scrollToBottom();
     });
   </script>
