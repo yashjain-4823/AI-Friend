@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your AI Friend 💬</title>
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #89f7fe, #66a6ff);
+      --card-bg: #ffffff;
+      --text-main: #000000;
+      --bot-bubble: #f0f0f0;
+      --user-bubble: #0078ff;
+      --border-color: #dddddd;
+      --input-bg: #ffffff;
+    }
+
+    body.dark {
+      --bg-gradient: radial-gradient(circle at top, #1f2937, #020617);
+      --card-bg: #020617;
+      --text-main: #e5e7eb;
+      --bot-bubble: #111827;
+      --user-bubble: #2563eb;
+      --border-color: #374151;
+      --input-bg: #020617;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--bg-gradient);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      color: var(--text-main);
+    }
+
+    .chat-container {
+      width: 420px;
+      max-width: 95vw;
+      background: var(--card-bg);
+      border-radius: 18px;
+      box-shadow: 0px 18px 40px rgba(0, 0, 0, 0.25);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+
+    .title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .title span.emoji {
+      font-size: 1.3rem;
+    }
+
+    .chip {
+      font-size: 0.7rem;
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      color: #2563eb;
+    }
+
+    .icon-button {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 1.1rem;
+      padding: 4px;
+      border-radius: 999px;
+      transition: background 0.15s ease;
+      color: var(--text-main);
+    }
+    .icon-button:hover {
+      background: rgba(148, 163, 184, 0.25);
+    }
+
+    .chat-box {
+      height: 420px;
+      max-height: 70vh;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: radial-gradient(circle at top left, rgba(59, 130, 246, 0.07), transparent);
+    }
+
+    .message {
+      padding: 8px 12px;
+      border-radius: 16px;
+      max-width: 85%;
+      word-wrap: break-word;
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+    .user {
+      background: var(--user-bubble);
+      color: #ffffff;
+      align-self: flex-end;
+      border-bottom-right-radius: 4px;
+    }
+    .bot {
+      background: var(--bot-bubble);
+      color: var(--text-main);
+      align-self: flex-start;
+      border-bottom-left-radius: 4px;
+      white-space: pre-wrap;
+    }
+
+    .typing {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .dots span {
+      display: inline-block;
+      width: 4px;
+      height: 4px;
+      border-radius: 999px;
+      background: #9ca3af;
+      margin-right: 2px;
+      animation: blink 1.2s infinite;
+    }
+    .dots span:nth-child(2) {
+      animation-delay: 0.15s;
+    }
+    .dots span:nth-child(3) {
+      animation-delay: 0.3s;
+    }
+
+    @keyframes blink {
+      0% { transform: translateY(0); opacity: 0.4; }
+      50% { transform: translateY(-2px); opacity: 1; }
+      100% { transform: translateY(0); opacity: 0.4; }
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .input-wrap {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      border-radius: 999px;
+      background: var(--input-bg);
+      border: 1px solid var(--border-color);
+      padding-left: 10px;
+    }
+
+    #user-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 8px 10px;
+      font-size: 0.9rem;
+      background: transparent;
+      color: var(--text-main);
+    }
+
+    #user-input::placeholder {
+      color: #9ca3af;
+    }
+
+    .mic-btn {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      padding: 4px 10px 4px 6px;
+      font-size: 1rem;
+      color: #ef4444;
+    }
+
+    .send-btn {
+      padding: 8px 18px;
+      background: #2563eb;
+      color: #ffffff;
+      border: none;
+      border-radius: 999px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .send-btn:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+    }
+    .send-btn:disabled {
+      opacity: 0.6;
+      cursor: default;
+      transform: none;
+    }
+
+    .footer-hint {
+      font-size: 0.7rem;
+      margin-top: -4px;
+      color: #9ca3af;
+    }
+
+    @media (max-width: 480px) {
+      .chat-container {
+        width: 100%;
+        height: 95vh;
+        border-radius: 0;
+      }
+      .chat-box {
+        max-height: calc(100vh - 160px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="header">
+      <div class="title">
+        <span class="emoji">🤖</span>
+        <span id="title-text">Your AI Friend</span>
+        <span class="chip" id="status-chip">Online · Gemini</span>
+      </div>
+      <div>
+        <button class="icon-button" id="theme-toggle" title="Toggle dark mode">🌙</button>
+      </div>
+    </div>
+
+    <div class="chat-box" id="chat-box"></div>
+
+    <div class="input-row">
+      <div class="input-wrap">
+        <input
+          type="text"
+          id="user-input"
+          placeholder="Say something..."
+        />
+        <button class="mic-btn" id="mic-btn" title="Voice input">🎤</button>
+      </div>
+      <button class="send-btn" id="send-btn">
+        Send
+      </button>
+    </div>
+    <div class="footer-hint">
+      Tip: Type “my name is Yash” once — bot tumhe naam se bulaayega 😊
+    </div>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById("chat-box");
+    const userInput = document.getElementById("user-input");
+    const sendBtn = document.getElementById("send-btn");
+    const micBtn = document.getElementById("mic-btn");
+    const themeToggle = document.getElementById("theme-toggle");
+    const titleText = document.getElementById("title-text");
+
+    // Conversation history for backend (role: 'user' | 'model')
+    const history = [];
+    let userName = localStorage.getItem("aiFriendName") || "";
+    if (userName) {
+      titleText.textContent = `Your AI Friend · ${userName}`;
+    }
+
+    // Typing indicator element
+    let typingDiv = null;
+
+    function scrollToBottom() {
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function addMessage(text, sender) {
+      const div = document.createElement("div");
+      div.classList.add("message", sender);
+      div.innerText = text;
+      chatBox.appendChild(div);
+      scrollToBottom();
+      return div;
+    }
+
+    function showTyping() {
+      if (typingDiv) return;
+      typingDiv = document.createElement("div");
+      typingDiv.classList.add("message", "bot");
+      typingDiv.innerHTML = `
+        <span class="typing">
+          AI is typing
+          <span class="dots">
+            <span></span><span></span><span></span>
+          </span>
+        </span>
+      `;
+      chatBox.appendChild(typingDiv);
+      scrollToBottom();
+    }
+
+    function hideTyping() {
+      if (typingDiv) {
+        typingDiv.remove();
+        typingDiv = null;
+      }
+    }
+
+    function detectName(message) {
+      const match = message.match(/my name is\s+([a-zA-Z]+)/i);
+      if (match && match[1]) {
+        userName = match[1];
+        localStorage.setItem("aiFriendName", userName);
+        titleText.textContent = `Your AI Friend · ${userName}`;
+      }
+    }
+
+    async function sendMessage() {
+      const text = userInput.value.trim();
+      if (!text) return;
+
+      // Add user message to UI and history
+      addMessage(text, "user");
+      history.push({ role: "user", text });
+
+      detectName(text);
+
+      userInput.value = "";
+      userInput.focus();
+
+      sendBtn.disabled = true;
+      showTyping();
+
+      try {
+        const res = await fetch("http://127.0.0.1:5000/chat", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            user_message: text,
+            history: history,
+            user_name: userName,
+          }),
+        });
+
+        const data = await res.json();
+        const botText =
+          data.response_text || "Sorry, kuch gadbad ho gayi 🥲";
+
+        hideTyping();
+        addMessage(botText, "bot");
+        history.push({ role: "model", text: botText });
+
+      } catch (err) {
+        console.error(err);
+        hideTyping();
+        const errorText =
+          "⚠️ Backend se connect nahi ho pa raha. Check karo ke Flask server chal raha hai ya nahi.";
+        addMessage(errorText, "bot");
+        history.push({ role: "model", text: errorText });
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+
+    // Enter to send
+    userInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    sendBtn.addEventListener("click", sendMessage);
+
+    // Theme toggle
+    themeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      const isDark = document.body.classList.contains("dark");
+      themeToggle.textContent = isDark ? "☀️" : "🌙";
+      localStorage.setItem("aiFriendTheme", isDark ? "dark" : "light");
+    });
+
+    // Load theme preference
+    const savedTheme = localStorage.getItem("aiFriendTheme");
+    if (savedTheme === "dark") {
+      document.body.classList.add("dark");
+      themeToggle.textContent = "☀️";
+    }
+
+    // Voice input (Web Speech API)
+    let recognition = null;
+    let recognizing = false;
+
+    if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
+      const SR =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SR();
+      recognition.lang = "en-IN";
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        recognizing = true;
+        micBtn.textContent = "🛑";
+        micBtn.title = "Stop listening";
+      };
+
+      recognition.onend = () => {
+        recognizing = false;
+        micBtn.textContent = "🎤";
+        micBtn.title = "Voice input";
+      };
+
+      recognition.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        userInput.value = transcript;
+        sendMessage();
+      };
+    } else {
+      micBtn.disabled = true;
+      micBtn.title = "Voice input not supported";
+    }
+
+    micBtn.addEventListener("click", () => {
+      if (!recognition) return;
+      if (!recognizing) {
+        recognition.start();
+      } else {
+        recognition.stop();
+      }
+    });
+
+    // Initial welcome message
+    window.addEventListener("load", () => {
+      const welcome =
+        userName
+          ? `Hi ${userName}! 😊 Main tumhara AI Friend hoon. Kya help karu aaj?`
+          : "Hi! 😊 Main tumhara AI Friend hoon. Tum mujhe kuch bhi puch sakte ho – coding, exams, ya random bakchodi 😄";
+      addMessage(welcome, "bot");
+      history.push({ role: "model", text: welcome });
+      scrollToBottom();
+    });
+  </script>
+</body>
+</html>
