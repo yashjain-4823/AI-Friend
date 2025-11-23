@@ -5,9 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Your AI Friend 💬</title>
 
-  <!-- PDF export library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
   <style>
     :root {
       --bg: radial-gradient(circle at top, #020617 0, #020617 40%, #000 100%);
@@ -36,34 +33,28 @@
       color: var(--text-main);
       margin: 0;
       min-height: 100vh;
-
-      /* screen center me wide strip jaisi */
-      display: flex;
-      justify-content: center;
     }
 
     .chat-shell {
       width: 100%;
-      max-width: 1100px; /* full-screen feel */
-      padding: 16px;
+      max-width: none;
+      padding: 0;
     }
 
     .chat-container {
       width: 100%;
       background: radial-gradient(circle at top left, #020617 0, #020617 55%, #020617 100%);
-      border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-strong);
+      border-radius: 0;
+      box-shadow: none;
       border: 1px solid var(--card-border);
-      padding: 18px 18px 12px;
+      padding: 12px 18px 10px;
       display: flex;
       flex-direction: column;
       gap: 10px;
       backdrop-filter: blur(22px);
       position: relative;
       overflow: hidden;
-
-      /* almost full height */
-      min-height: calc(100vh - 32px);
+      min-height: 100vh;
     }
 
     .glow {
@@ -337,7 +328,7 @@
     .dots span:nth-child(2) { animation-delay: 0.15s; }
     .dots span:nth-child(3) { animation-delay: 0.3s; }
 
-    /* Prompt bar (Gemini-style) */
+    /* Prompt bar */
 
     .input-row {
       margin-top: 8px;
@@ -467,6 +458,41 @@
       padding: 0 2px 2px;
     }
 
+    /* LIGHT MODE OVERRIDES */
+    body.light-mode {
+      background: linear-gradient(135deg, #eff6ff, #e0f2fe);
+      color: #111827;
+    }
+
+    body.light-mode .chat-container {
+      background: radial-gradient(circle at top left, #e0f2fe 0, #eff6ff 55%, #ffffff 100%);
+      border-color: rgba(148, 163, 184, 0.4);
+    }
+
+    body.light-mode .chat-box {
+      background: #ffffff;
+      border-color: rgba(148, 163, 184, 0.7);
+      box-shadow: inset 0 0 0 1px rgba(209, 213, 219, 0.7);
+    }
+
+    body.light-mode .message.bot {
+      background: #f9fafb;
+      color: #111827;
+      border-color: rgba(209, 213, 219, 1);
+      box-shadow: 0 10px 20px rgba(148, 163, 184, 0.4);
+    }
+
+    body.light-mode .subtitle,
+    body.light-mode .msg-meta {
+      color: #6b7280;
+    }
+
+    body.light-mode .pill {
+      background: rgba(243, 244, 246, 0.9);
+      border-color: rgba(209, 213, 219, 1);
+      color: #4b5563;
+    }
+
     /* Animations */
 
     @keyframes blink {
@@ -503,6 +529,11 @@
       .title-main { font-size: 1rem; }
       .subtitle { font-size: 0.7rem; }
     }
+
+    .msg-meta {
+      display: none !important;
+    }
+
   </style>
 </head>
 <body>
@@ -522,21 +553,18 @@
                 </div>
               </div>
               <div class="subtitle">
-                Ask me anything – coding, exams, ya random bakchodi 😄
+                Ask me anything 😄
               </div>
             </div>
           </div>
           <div class="header-actions">
-            <button class="icon-button" id="export-btn" title="Export chat as PDF">
-              📄<span>PDF</span>
-            </button>
             <div class="pill" id="edit-pill" style="display:none;">Editing last message…</div>
             <button
               class="icon-button"
               id="theme-toggle"
               title="Toggle dark / light theme"
             >
-              🌙
+              ☀️
             </button>
           </div>
         </div>
@@ -547,7 +575,7 @@
         <div class="input-row">
           <div class="prompt-bar">
             <div class="prompt-left">
-              <button class="prompt-icon-btn" type="button" title="New chat">
+              <button class="prompt-icon-btn" type="button" title="New chat" id="new-chat-btn">
                 +
               </button>
 
@@ -595,20 +623,18 @@
             </div>
           </div>
         </div>
-
-        <div class="footer-hint">
-          Tip: Type “my name is Yash” once — bot tumhe naam se bulaayega 😊
-        </div>
       </div>
     </div>
   </div>
 
   <script>
     // ========= CONFIG =========
-    // Render backend URL:
-    const BACKEND_URL = "https://ai-friend-15a2.onrender.com/chat";
-    // Local testing ke liye:
-    // const BACKEND_URL = "http://127.0.0.1:5000/chat";
+    const BACKEND_URL = "http://127.0.0.1:5000/chat";
+    console.log("BACKEND_URL in browser =", BACKEND_URL);
+
+    // Always start with a fresh chat every load
+    localStorage.removeItem("aiFriendHistory");
+    localStorage.removeItem("aiFriendName");
 
     const chatBox = document.getElementById("chat-box");
     const userInput = document.getElementById("user-input");
@@ -618,23 +644,19 @@
     const titleText = document.getElementById("title-text");
     const statusChip = document.getElementById("status-chip");
     const editPill = document.getElementById("edit-pill");
-    const exportBtn = document.getElementById("export-btn");
     const attachBtn = document.getElementById("attach-btn");
     const fileInput = document.getElementById("file-input");
     const fileBadge = document.getElementById("file-badge");
+    const newChatBtn = document.getElementById("new-chat-btn");
 
     const history = [];
     const messageElements = [];
-    let userName = localStorage.getItem("aiFriendName") || "";
+    let userName = "";        // no persistent name
     let typingDiv = null;
     let recognition = null;
     let recognizing = false;
     let editingIndex = null;
     let selectedFiles = [];
-
-    if (userName) {
-      titleText.textContent = `Your AI Friend · ${userName}`;
-    }
 
     function scrollToBottom() {
       chatBox.scrollTop = chatBox.scrollHeight;
@@ -666,13 +688,13 @@
 
       msg.appendChild(msgText);
 
-      const meta = document.createElement("div");
-      meta.classList.add("msg-meta");
-      const now = new Date();
-      const hh = String(now.getHours()).padStart(2, "0");
-      const mm = String(now.getMinutes()).padStart(2, "0");
-      meta.textContent = `${role === "user" ? "You" : "AI"} · ${hh}:${mm}`;
-      msg.appendChild(meta);
+      // const meta = document.createElement("div");
+      // meta.classList.add("msg-meta");
+      // const now = new Date();
+      // const hh = String(now.getHours()).padStart(2, "0");
+      // const mm = String(now.getMinutes()).padStart(2, "0");
+      // meta.textContent = `${role === "user" ? "You" : "AI"} · ${hh}:${mm}`;
+      // msg.appendChild(meta);
 
       bubble.appendChild(msg);
 
@@ -740,7 +762,6 @@
       const match = message.match(/my name is\s+([a-zA-Z]+)/i);
       if (match && match[1]) {
         userName = match[1];
-        localStorage.setItem("aiFriendName", userName);
         titleText.textContent = `Your AI Friend · ${userName}`;
       }
     }
@@ -761,30 +782,14 @@
       }, speed);
     }
 
+    // No-op history persistence (always fresh)
     function saveHistory() {
-      try {
-        localStorage.setItem("aiFriendHistory", JSON.stringify(history));
-      } catch (e) {
-        console.warn("Could not save history", e);
-      }
+      // intentionally empty
     }
 
     function loadHistory() {
-      try {
-        const raw = localStorage.getItem("aiFriendHistory");
-        if (!raw) return false;
-        const arr = JSON.parse(raw);
-        if (!Array.isArray(arr) || !arr.length) return false;
-
-        arr.forEach((item) => {
-          history.push(item);
-          addMessage(item.text, item.role, false);
-        });
-        return true;
-      } catch (e) {
-        console.warn("Could not load history", e);
-        return false;
-      }
+      // always start without previous messages
+      return false;
     }
 
     function reindexMessages() {
@@ -855,6 +860,21 @@
       fileBadge.style.display = "inline";
     });
 
+    // New chat = clear messages & show fresh welcome
+    newChatBtn.addEventListener("click", () => {
+      history.length = 0;
+      messageElements.forEach((el) => el.remove());
+      messageElements.length = 0;
+      userName = "";
+      titleText.textContent = "Your AI Friend";
+      const welcome =
+        "Hi! 😊 I'm your AI friend. You can ask me anything – coding, exams, or whatever you like 😄";
+      history.push({ role: "model", text: welcome });
+      addMessage(welcome, "model", false);
+      saveHistory();
+      scrollToBottom();
+    });
+
     async function sendMessage() {
       const text = userInput.value.trim();
       if (!text && selectedFiles.length === 0) return;
@@ -896,7 +916,7 @@
         const data = await res.json();
         const botText =
           data.response_text ||
-          "Sorry, kuch gadbad ho gayi 🥲";
+          "Sorry, something went wrong 🥲";
 
         hideTyping();
         history.push({ role: "model", text: botText });
@@ -907,11 +927,11 @@
         console.error(err);
         hideTyping();
         const errorText =
-          "⚠️ Backend se connect nahi ho pa raha. Thodi der baad try karna, ya Yash ko bolo server check kare 🙂";
+          "⚠️ Unable to connect to the backend. Please try again later 🙂";
         history.push({ role: "model", text: errorText });
         addMessage(errorText, "model", false);
         saveHistory();
-        setStatus("Offline? Check server", false);
+        setStatus("Offline? Please check the server", false);
       } finally {
         sendBtn.disabled = false;
         micBtn.disabled =
@@ -934,26 +954,16 @@
 
     sendBtn.addEventListener("click", sendMessage);
 
-    // Theme toggle (simple)
+    // Theme toggle (pure class-based)
     themeToggle.addEventListener("click", () => {
-      document.body.classList.toggle("light-mode");
-      const isLight = document.body.classList.contains("light-mode");
-      if (isLight) {
-        document.body.style.background =
-          "linear-gradient(135deg, #eff6ff, #e0f2fe)";
-        themeToggle.textContent = "🌙";
-      } else {
-        document.body.style.background = "";
-        themeToggle.textContent = "☀️";
-      }
+      const isLight = document.body.classList.toggle("light-mode");
+      themeToggle.textContent = isLight ? "🌙" : "☀️";
       localStorage.setItem("aiFriendTheme", isLight ? "light" : "dark");
     });
 
     const savedTheme = localStorage.getItem("aiFriendTheme");
     if (savedTheme === "light") {
       document.body.classList.add("light-mode");
-      document.body.style.background =
-        "linear-gradient(135deg, #eff6ff, #e0f2fe)";
       themeToggle.textContent = "🌙";
     } else {
       themeToggle.textContent = "☀️";
@@ -995,50 +1005,13 @@
       else recognition.stop();
     });
 
-    // PDF export
-    exportBtn.addEventListener("click", () => {
-      try {
-        if (!window.jspdf) {
-          alert("PDF library load nahi hui. Internet connection check karo.");
-          return;
-        }
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ unit: "pt", format: "a4" });
-        let y = 40;
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(14);
-        doc.text("Your AI Friend - Chat History", 40, y);
-        y += 24;
-        doc.setFontSize(11);
-
-        history.forEach((item) => {
-          const prefix = item.role === "user" ? "You: " : "AI: ";
-          const lines = doc.splitTextToSize(prefix + item.text, 500);
-          if (y + lines.length * 14 > 800) {
-            doc.addPage();
-            y = 40;
-          }
-          doc.text(lines, 40, y);
-          y += lines.length * 14 + 10;
-        });
-        const filename = userName
-          ? `ai-friend-chat-${userName}.pdf`
-          : "ai-friend-chat.pdf";
-        doc.save(filename);
-      } catch (e) {
-        console.error(e);
-        alert("PDF export me problem aa gayi. Console check karo.");
-      }
-    });
-
     // Initial load
     window.addEventListener("load", () => {
       userInput.focus();
-      const loaded = loadHistory();
+      const loaded = loadHistory(); // always false -> fresh start
       if (!loaded) {
-        const welcome = userName
-          ? `Hi ${userName}! 😊 Main tumhara AI Friend hoon. Kya help karu aaj?`
-          : "Hi! 😊 Main tumhara AI Friend hoon. Tum mujhe kuch bhi puch sakte ho – coding, exams, ya random bakchodi 😄";
+        const welcome =
+          "Hi! 😊 I'm your AI friend. You can ask me anything – coding, exams, or whatever you like 😄";
         history.push({ role: "model", text: welcome });
         addMessage(welcome, "model", false);
         saveHistory();
