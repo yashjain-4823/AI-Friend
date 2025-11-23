@@ -18,7 +18,7 @@
       --accent: #2563eb;
       --bot-bubble: #020617;
       --user-bubble: #2563eb;
-      --input-bg: #020617;
+      --input-bg: #ffffff;
       --shadow-strong: 0 22px 60px rgba(15, 23, 42, 0.9);
       --radius-xl: 22px;
     }
@@ -34,16 +34,18 @@
         sans-serif;
       background: var(--bg);
       color: var(--text-main);
+      margin: 0;
       min-height: 100vh;
+
+      /* screen center me wide strip jaisi */
       display: flex;
       justify-content: center;
-      align-items: center;
-      padding: 16px;
     }
 
     .chat-shell {
       width: 100%;
-      max-width: 520px;
+      max-width: 1100px; /* full-screen feel */
+      padding: 16px;
     }
 
     .chat-container {
@@ -59,14 +61,18 @@
       backdrop-filter: blur(22px);
       position: relative;
       overflow: hidden;
+
+      /* almost full height */
+      min-height: calc(100vh - 32px);
     }
 
     .glow {
       position: absolute;
       inset: -40%;
-      background: radial-gradient(circle at 10% 0, rgba(56, 189, 248, 0.1), transparent 55%),
-                  radial-gradient(circle at 90% 10%, rgba(96, 165, 250, 0.13), transparent 60%),
-                  radial-gradient(circle at 30% 100%, rgba(139, 92, 246, 0.06), transparent 60%);
+      background:
+        radial-gradient(circle at 10% 0, rgba(56, 189, 248, 0.1), transparent 55%),
+        radial-gradient(circle at 90% 10%, rgba(96, 165, 250, 0.13), transparent 60%),
+        radial-gradient(circle at 30% 100%, rgba(139, 92, 246, 0.06), transparent 60%);
       pointer-events: none;
       opacity: 0.9;
     }
@@ -77,6 +83,7 @@
       display: flex;
       flex-direction: column;
       gap: 10px;
+      height: 100%;
     }
 
     /* Header */
@@ -95,8 +102,8 @@
     }
 
     .avatar {
-      width: 36px;
-      height: 36px;
+      width: 38px;
+      height: 38px;
       border-radius: 999px;
       display: inline-flex;
       align-items: center;
@@ -196,15 +203,19 @@
     /* Chat box */
 
     .chat-box {
-      height: 430px;
-      max-height: min(70vh, 430px);
+      flex: 1;
+      height: auto;
+      max-height: none;
       overflow-y: auto;
       border-radius: 18px;
       padding: 12px 10px 12px;
       display: flex;
       flex-direction: column;
       gap: 8px;
-      background: radial-gradient(circle at top left, rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.95));
+      background: radial-gradient(circle at top left,
+        rgba(15, 23, 42, 0.9),
+        rgba(15, 23, 42, 0.95)
+      );
       border: 1px solid rgba(30, 64, 175, 0.5);
       box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.9);
     }
@@ -323,91 +334,129 @@
       margin-right: 2px;
       animation: blink 1.2s infinite;
     }
-
     .dots span:nth-child(2) { animation-delay: 0.15s; }
     .dots span:nth-child(3) { animation-delay: 0.3s; }
 
-    /* Input row */
+    /* Prompt bar (Gemini-style) */
 
     .input-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-top: 4px;
+      margin-top: 8px;
     }
 
-    .input-wrap {
-      position: relative;
-      flex: 1;
+    .prompt-bar {
+      width: 100%;
       display: flex;
       align-items: center;
+      justify-content: space-between;
       border-radius: 999px;
-      background: var(--input-bg);
-      border: 1px solid rgba(55, 65, 81, 0.9);
-      padding-left: 12px;
-      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.9);
+      background: #ffffff;
+      padding: 6px 10px;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.25);
+      gap: 8px;
     }
 
-    #user-input {
-      flex: 1;
-      border: none;
-      outline: none;
-      padding: 8px 10px;
-      font-size: 0.9rem;
-      background: transparent;
-      color: var(--text-main);
+    .prompt-left,
+    .prompt-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    #user-input::placeholder {
-      color: var(--muted);
-    }
-
-    .mic-btn {
+    .prompt-icon-btn {
       border: none;
       background: transparent;
-      cursor: pointer;
-      padding: 4px 10px 4px 6px;
-      font-size: 1rem;
-      color: #f97316;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.08s ease, opacity 0.15s ease;
+      color: #6b7280;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.1s ease, color 0.15s ease;
     }
 
-    .mic-btn:active { transform: scale(0.94); }
+    .prompt-icon-btn:hover {
+      background: #f3f4f6;
+      transform: translateY(-0.5px);
+      color: #111827;
+    }
 
-    .send-btn {
-      padding: 9px 18px;
-      background: linear-gradient(135deg, #2563eb, #1d4ed8);
-      color: #ffffff;
+    .prompt-input-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+
+    #user-input {
+      width: 100%;
       border: none;
-      border-radius: 999px;
-      cursor: pointer;
+      outline: none;
       font-size: 0.9rem;
-      font-weight: 500;
+      background: transparent;
+      color: #111827;
+    }
+
+    #user-input::placeholder {
+      color: #9ca3af;
+    }
+
+    #file-badge {
+      max-width: 120px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #mic-btn {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+      color: #6b7280;
+      font-size: 1rem;
+      transition: background 0.15s ease, transform 0.1s ease, color 0.15s ease;
+    }
+
+    #mic-btn:hover {
+      background: #f3f4f6;
+      color: #111827;
+      transform: translateY(-0.5px);
+    }
+
+    #send-btn {
+      border: none;
+      background: #111827;
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #f9fafb;
+      font-size: 1rem;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.4);
       transition: background 0.15s ease, transform 0.1s ease,
         box-shadow 0.15s ease;
-      box-shadow: 0 12px 30px rgba(37, 99, 235, 0.5);
-      white-space: nowrap;
     }
 
-    .send-btn span.icon { font-size: 0.9rem; }
-
-    .send-btn:hover {
-      background: linear-gradient(135deg, #1d4ed8, #1d4ed8);
-      transform: translateY(-1px);
-      box-shadow: 0 16px 35px rgba(37, 99, 235, 0.7);
+    #send-btn:hover {
+      background: #020617;
+      transform: translateY(-0.5px);
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.6);
     }
 
-    .send-btn:disabled {
+    #send-btn:disabled {
       opacity: 0.6;
-      cursor: default;
-      transform: none;
       box-shadow: none;
+      transform: none;
+      cursor: default;
     }
 
     .footer-hint {
@@ -440,9 +489,17 @@
       to   { opacity: 1; transform: translateX(0) scale(1); }
     }
 
+    /* Mobile tweaks */
+
     @media (max-width: 520px) {
-      .chat-container { border-radius: 18px; padding: 14px 12px 10px; }
-      .chat-box { height: min(65vh, 420px); }
+      .chat-container {
+        border-radius: 0;
+        padding: 10px 8px 8px;
+        min-height: 100vh;
+      }
+      .chat-shell {
+        padding: 0;
+      }
       .title-main { font-size: 1rem; }
       .subtitle { font-size: 0.7rem; }
     }
@@ -486,23 +543,59 @@
 
         <div class="chat-box" id="chat-box"></div>
 
+        <!-- Prompt bar -->
         <div class="input-row">
-          <div class="input-wrap">
-            <input
-              type="text"
-              id="user-input"
-              placeholder="Say something nice..."
-              autocomplete="off"
-            />
-            <button class="mic-btn" id="mic-btn" title="Voice input">
-              🎤
-            </button>
+          <div class="prompt-bar">
+            <div class="prompt-left">
+              <button class="prompt-icon-btn" type="button" title="New chat">
+                +
+              </button>
+
+              <!-- Attach button -->
+              <button
+                class="prompt-icon-btn"
+                type="button"
+                id="attach-btn"
+                title="Attach file"
+              >
+                📎
+              </button>
+
+              <!-- Hidden file input -->
+              <input
+                type="file"
+                id="file-input"
+                multiple
+                style="display:none"
+                accept=".pdf,image/*"
+              />
+            </div>
+
+            <div class="prompt-input-wrap">
+              <input
+                type="text"
+                id="user-input"
+                placeholder="Ask something nice..."
+                autocomplete="off"
+              />
+            </div>
+
+            <div class="prompt-right">
+              <span
+                id="file-badge"
+                style="font-size:0.7rem;color:#6b7280;display:none;"
+              ></span>
+
+              <button id="mic-btn" type="button" title="Voice input">
+                🎤
+              </button>
+              <button id="send-btn" type="button" title="Send">
+                <span style="font-size:0.9rem;">➤</span>
+              </button>
+            </div>
           </div>
-          <button class="send-btn" id="send-btn">
-            <span class="icon">➤</span>
-            <span>Send</span>
-          </button>
         </div>
+
         <div class="footer-hint">
           Tip: Type “my name is Yash” once — bot tumhe naam se bulaayega 😊
         </div>
@@ -511,7 +604,11 @@
   </div>
 
   <script>
+    // ========= CONFIG =========
+    // Render backend URL:
     const BACKEND_URL = "https://ai-friend-15a2.onrender.com/chat";
+    // Local testing ke liye:
+    // const BACKEND_URL = "http://127.0.0.1:5000/chat";
 
     const chatBox = document.getElementById("chat-box");
     const userInput = document.getElementById("user-input");
@@ -522,6 +619,9 @@
     const statusChip = document.getElementById("status-chip");
     const editPill = document.getElementById("edit-pill");
     const exportBtn = document.getElementById("export-btn");
+    const attachBtn = document.getElementById("attach-btn");
+    const fileInput = document.getElementById("file-input");
+    const fileBadge = document.getElementById("file-badge");
 
     const history = [];
     const messageElements = [];
@@ -529,13 +629,12 @@
     let typingDiv = null;
     let recognition = null;
     let recognizing = false;
-    let editingIndex = null; // history index being edited
+    let editingIndex = null;
+    let selectedFiles = [];
 
     if (userName) {
       titleText.textContent = `Your AI Friend · ${userName}`;
     }
-
-    /* Helpers */
 
     function scrollToBottom() {
       chatBox.scrollTop = chatBox.scrollHeight;
@@ -567,7 +666,6 @@
 
       msg.appendChild(msgText);
 
-      // meta (time)
       const meta = document.createElement("div");
       meta.classList.add("msg-meta");
       const now = new Date();
@@ -578,7 +676,6 @@
 
       bubble.appendChild(msg);
 
-      // actions (edit/delete for user, delete for bot)
       const actions = document.createElement("div");
       actions.classList.add("msg-actions");
 
@@ -605,15 +702,13 @@
     }
 
     function addMessage(text, role, animateBot = false) {
-      const index = history.length; // same order
-      const { bubble, msgText } = createBubble(role, role === "model" ? text : text, index);
+      const index = history.length;
+      const { msgText } = createBubble(role, text, index);
 
       if (role === "model" && animateBot) {
         msgText.textContent = "";
         typeText(msgText, text);
       }
-
-      return bubble;
     }
 
     function showTyping() {
@@ -650,12 +745,11 @@
       }
     }
 
-    /* Typing animation for bot text */
     function typeText(element, fullText) {
       let i = 0;
-      const speed = 15; // ms per char
-      const maxInstant = 40; // for very short
-      if (fullText.length <= maxInstant) {
+      const speed = 15;
+      const instantLimit = 40;
+      if (fullText.length <= instantLimit) {
         element.textContent = fullText;
         return;
       }
@@ -666,8 +760,6 @@
         if (i > fullText.length) clearInterval(timer);
       }, speed);
     }
-
-    /* History persistence */
 
     function saveHistory() {
       try {
@@ -684,7 +776,6 @@
         const arr = JSON.parse(raw);
         if (!Array.isArray(arr) || !arr.length) return false;
 
-        // rebuild
         arr.forEach((item) => {
           history.push(item);
           addMessage(item.text, item.role, false);
@@ -696,8 +787,6 @@
       }
     }
 
-    /* Delete & edit */
-
     function reindexMessages() {
       messageElements.forEach((el, idx) => {
         el.dataset.index = idx;
@@ -706,10 +795,8 @@
 
     function deleteMessage(idx) {
       if (idx < 0 || idx >= history.length) return;
-      // remove from DOM
       const el = messageElements[idx];
       if (el && el.parentNode) el.parentNode.removeChild(el);
-      // remove from arrays
       history.splice(idx, 1);
       messageElements.splice(idx, 1);
       reindexMessages();
@@ -733,13 +820,11 @@
 
       if (idx == null || idx < 0 || idx >= history.length) return;
 
-      // update user message text
       history[idx].text = newText;
       const bubble = messageElements[idx];
       const msgText = bubble.querySelector(".msg-text");
       if (msgText) msgText.textContent = newText;
 
-      // remove all messages AFTER this (old answers invalid)
       for (let i = messageElements.length - 1; i > idx; i--) {
         const el = messageElements[i];
         if (el && el.parentNode) el.parentNode.removeChild(el);
@@ -750,19 +835,38 @@
       saveHistory();
     }
 
-    /* Main send logic */
+    // File attach
+    attachBtn.addEventListener("click", () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener("change", () => {
+      selectedFiles = Array.from(fileInput.files || []);
+      if (selectedFiles.length === 0) {
+        fileBadge.style.display = "none";
+        fileBadge.textContent = "";
+        return;
+      }
+      if (selectedFiles.length === 1) {
+        fileBadge.textContent = selectedFiles[0].name;
+      } else {
+        fileBadge.textContent = selectedFiles.length + " files";
+      }
+      fileBadge.style.display = "inline";
+    });
 
     async function sendMessage() {
       const text = userInput.value.trim();
-      if (!text) return;
+      if (!text && selectedFiles.length === 0) return;
 
-      if (editingIndex !== null) {
-        // update existing user message and history
+      if (editingIndex !== null && text) {
         applyEdit(text);
-      } else {
-        // new user message
+      } else if (text) {
         history.push({ role: "user", text });
         addMessage(text, "user", false);
+      } else if (!text && selectedFiles.length > 0) {
+        history.push({ role: "user", text: "[Sent attachments]" });
+        addMessage("[Sent attachments]", "user", false);
       }
 
       detectName(text);
@@ -776,18 +880,23 @@
       showTyping();
 
       try {
+        const formData = new FormData();
+        formData.append("user_message", text);
+        formData.append("user_name", userName || "");
+        formData.append("history", JSON.stringify(history));
+        selectedFiles.forEach((file) => {
+          formData.append("files", file);
+        });
+
         const res = await fetch(BACKEND_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_message: text,
-            history: history,
-            user_name: userName,
-          }),
+          body: formData,
         });
 
         const data = await res.json();
-        const botText = data.response_text || "Sorry, kuch gadbad ho gayi 🥲";
+        const botText =
+          data.response_text ||
+          "Sorry, kuch gadbad ho gayi 🥲";
 
         hideTyping();
         history.push({ role: "model", text: botText });
@@ -807,11 +916,15 @@
         sendBtn.disabled = false;
         micBtn.disabled =
           !("webkitSpeechRecognition" in window || "SpeechRecognition" in window);
+
+        selectedFiles = [];
+        fileInput.value = "";
+        fileBadge.style.display = "none";
+        fileBadge.textContent = "";
       }
     }
 
-    /* Events */
-
+    // Events
     userInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -846,7 +959,7 @@
       themeToggle.textContent = "☀️";
     }
 
-    // Voice input (Web Speech API)
+    // Voice input
     if ("webkitSpeechRecognition" in window || "SpeechRecognition" in window) {
       const SR =
         window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -918,14 +1031,14 @@
       }
     });
 
-    // Initial load: restore history or show welcome
+    // Initial load
     window.addEventListener("load", () => {
       userInput.focus();
       const loaded = loadHistory();
       if (!loaded) {
         const welcome = userName
           ? `Hi ${userName}! 😊 Main tumhara AI Friend hoon. Kya help karu aaj?`
-          : "Hi! 😊 Main tumhara AI Friend hoon. Tum mujhe kuch bhi puch sakte ho – coding, exams, ya random things 😄";
+          : "Hi! 😊 Main tumhara AI Friend hoon. Tum mujhe kuch bhi puch sakte ho – coding, exams, ya random bakchodi 😄";
         history.push({ role: "model", text: welcome });
         addMessage(welcome, "model", false);
         saveHistory();
